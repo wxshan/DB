@@ -9,16 +9,16 @@ import java.sql.SQLException;
  * Created by Administrator on 2017/8/17 0017.
  */
 public class DBHelper {
-    public static final String url = "jdbc:mysql://192.168.25.35:4000/test";
+    public static final String url = "jdbc:mysql://127.0.0.1:3306/test";
     public static final String name = "com.mysql.jdbc.Driver";
     public static final String user = "root";
-    public static final String password = "";
+    public static final String password = "root";
 
     public Connection conn = null;
     public PreparedStatement pst = null;
-    public int COUNT=1;
-    public String sql = "insert into wifi1 (deviceId,lng,lat,pos,mhz,g,signaldb,sa,saName,rtime,otime,wtime,cc) values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-
+    public int COUNT =1;
+    public String prefix ="insert into wifi1 (deviceId,lng,lat,pos,mhz,g,signaldb,sa,saName,rtime,otime,wtime,cc) values ";
+    public StringBuffer suffix = new StringBuffer();
 
 
     public DBHelper() {
@@ -27,34 +27,38 @@ public class DBHelper {
             Class.forName(name);//指定连接类型
             conn = DriverManager.getConnection(url, user, password);//获取连接
             conn.setAutoCommit(false);
-            pst = conn.prepareStatement(sql);//准备执行语句
+            pst = conn.prepareStatement("");//准备执行语句
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     //拼接sql
-    public void Mosaic(Document p) throws SQLException {
+    public void mosaic(Document p) throws SQLException {
         if ( COUNT <= 100000 ) {
-            pst.setString(1,p.getString("deviceId"));
-            pst.setString(2,String.valueOf(p.getDouble("lng")));
-            pst.setString(3,String.valueOf(p.getDouble("lat")));
-            pst.setString(4,p.getString("pos"));
-            pst.setInt(5,p.getInteger("mhz"));
-            pst.setInt(6,p.getInteger("g"));
-            pst.setInt(7,p.getInteger("signaldb"));
-            pst.setString(8,p.getString("sa"));
-            pst.setString(9,p.getString("saName"));
-            pst.setLong(10,p.getLong("rtime"));
-            pst.setLong(11,p.getLong("otime"));
-            pst.setLong(12,p.getLong("wtime"));
-            pst.setLong(13,p.getInteger("cc"));
-            pst.addBatch();
+            suffix.append("("+"'" +p.getString("deviceId")+"'" +","
+                    +String.valueOf(p.getDouble("lng")) +","
+                    +String.valueOf(p.getDouble("lat")) +","
+                    +"'"+p.getString("pos")+"'" +","
+                    +p.getInteger("mhz") +","
+                    +p.getInteger("g") +","
+                    +p.getInteger("signaldb") +","
+                    +"'" +p.getString("sa")    +"'" +","
+                    +"'" +p.getString("saName")+"'" +","
+                    +p.getLong("rtime") +","
+                    +p.getLong("otime") +","
+                    +p.getLong("wtime") +","
+                    +p.getInteger("cc")
+                    +"),");
 
-            if (COUNT % 5000 == 0) {
+
+            if (COUNT % 10000 == 0) {
+                String sql = prefix  + suffix.substring(0, suffix.length() - 1);
+                pst.addBatch(sql);
                 pst.executeBatch();
                 conn.commit();
                 pst.clearParameters();
+                suffix = new StringBuffer();
             }
             COUNT++;
         }else {

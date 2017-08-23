@@ -37,7 +37,7 @@ public class DBConnet {
                 while (mongoCursor.hasNext()) {
                     Document t = mongoCursor.next();
                     try {
-                        db.Mosaic(t);
+                        db.mosaic(t);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
